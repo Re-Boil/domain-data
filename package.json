@@ -1,0 +1,28 @@
+{
+  "name": "@REBoil/Domain-Data",
+  "version": "0.0.1",
+  "description": "Domain data storage based on Redux & Redux-Saga",
+  "main": "lib/index.js",
+  "repository": "git@gitlab.com:reboil/domain-data.git",
+  "author": "Felis Linx <felis.linx@gmail.com>",
+  "license": "MIT",
+  "moduleRoots": [
+    "src"
+  ],
+  "dependencies": {
+    "immer": "^5.0.0",
+    "lodash": "^4.17.15",
+    "redux": "^4.0.4",
+    "redux-actions": "^2.6.5",
+    "redux-saga": "^1.1.3",
+    "redux-thunk": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.0",
+    "@babel/core": "^7.7.2",
+    "@babel/preset-flow": "^7.0.0",
+    "flow-bin": "^0.111.3",
+    "flow-copy-source": "^2.0.8",
+    "flow-typed": "^2.6.2"
+  }
+}
