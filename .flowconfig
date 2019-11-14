@@ -1,11 +1,21 @@
 [ignore]
+<PROJECT_ROOT>/coverage/.*
+<PROJECT_ROOT>/lib/.*
+<PROJECT_ROOT>/flow-typed/npm/*
+.*/__tests__/.*
 
 [include]
+<PROJECT_ROOT>/src/**/*.js
 
 [libs]
+flow-typed
 
 [lints]
 
 [options]
+module.system.node.resolve_dirname=node_modules
+# module.system.node.resolve_dirname=<PROJECT_ROOT>/src
+module.name_mapper='^utils\/\(.*\)$' -> '<PROJECT_ROOT>/src/utils/\1'
+module.name_mapper='^extenders\/\(.*\)$' -> '<PROJECT_ROOT>/src/extenders/\1'
 
 [strict]
