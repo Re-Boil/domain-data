@@ -1,5 +1,4 @@
 // @flow
 
-export { default as createStore } from './create-store'
-export { default as createDomain } from './create-domain'
-export { default as fetch } from 'extenders/fetch'
+export { default as CreateStore } from 'core/store-creator'
+export { default as Domain } from 'core/domain-factory'

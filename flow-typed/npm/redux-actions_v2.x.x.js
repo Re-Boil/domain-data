@@ -150,7 +150,12 @@ declare module "redux-actions" {
   ): ReduxReducer<State, Action>;
 
   declare function handleActions<State, Action>(
-    reducers: { [key: string]: Reducer<State, Action> | ReducerMap<State, Action>, ... },
+    reducers: { [key: string]: Reducer<State, Action>, ... },
+    defaultState?: State
+  ): ReduxReducer<State, Action>;
+
+  declare function handleActions<State, Action>(
+    reducers: { [key: string]: ReducerMap<State, Action>, ... },
     defaultState?: State
   ): ReduxReducer<State, Action>;
 

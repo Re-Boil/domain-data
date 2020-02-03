@@ -1,0 +1,58 @@
+// type DomainReducers<DomainState, Actions> = {|
+//       [$ElementType<Actions, 'type'>]: (currentState: DomainState, action?: Actions) => DomainState,
+//   |}
+
+// function getProp<O: { +[string]: mixed }, P: $Keys<O>>(o: O, p: P): $ElementType<O, P> {
+//   return o[p]
+// }
+//
+// const r: string = getProp({ a: 42 }, 'a')
+
+// export type DomainExtender<DomainState, Actions> =
+//   | ((domain: string) => DomainExtendings<DomainState, Actions>)
+//   | DomainExtendings<DomainState, Actions>
+// export type DomainSelector<DS> = () => DS
+//
+// type DomainExtenders<DS, A> = {
+//   [string]: (string, DomainSelector<DS>) => DomainExtender<A> | DomainExtender<A>,
+// }
+//
+// type GluedExtanders<DS, A> = {
+//   reducers: {
+//     [string]: Reducer<any, A>,
+//   },
+//   initialState: DS,
+//   selectors: {
+//     [string]: (any) => any,
+//   },
+//   actions: {
+//     [string]: (any) => any,
+//   },
+//   sagas: {
+//     [string]: SagaCreator | Saga<*> | { [string]: SagaCreator | Saga<*> },
+//   },
+// }
+//
+
+// type State<DomainState> = {
+//   [string]: DomainState,
+// }
+
+// type Domain<DomainState, Actions> = {
+//   reducer: Reducer<DomainState, Actions>,
+// }
+
+//  /* : DomainExtenders<DomainState, Actions> */
+// : {
+//   (
+//     domain: string,
+//   )
+//   : {|
+//     reducer: any,
+//     initialState: any,
+//     selectors: any,
+//     actions: any,
+//     sagas: any,
+//   |},
+//   +toString: () => typeof DomainSignature,
+// } {

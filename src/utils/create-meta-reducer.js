@@ -1,10 +1,18 @@
 // @flow
 
-import get from 'lodash/get'
+import type { MetaAction } from 'utils/create-meta-action'
 
-type Reducer<State, Actions> = (state: State | void, action: Actions) => State
+export type MetaReducer<State, Action> = (state: State, action: Action) => State
+export type ReduxReducer<State, Action> = (state: State | void, action: Action) => State
 
-export default <State, Actions>(reducer: Reducer<State, Actions>, name: string) => (
+const createMetaReducer = <State, Action>(
+  reducer: ReduxReducer<State, Action>,
+  domain: string,
+): MetaReducer<State, MetaAction<$ElementType<Action, 'type'>, $ElementType<Action, 'payload'>, Action>> => (
   state: State | void,
-  action: Actions,
-): State => (get(action, 'meta.name') !== name && state !== undefined ? state : reducer(state, action))
+  action,
+): State => {
+  return action.meta?.domain !== domain && state !== undefined ? state : reducer(state, action)
+}
+
+export default createMetaReducer

@@ -40,7 +40,6 @@ module.exports = {
     // }
   },
   'rules': {
-    // 'no-undef': 'off',
     'prettier/prettier': 'error',
     // 'flowtype-errors/show-errors': 'error'
     'no-plusplus': 'off',
@@ -63,6 +62,7 @@ module.exports = {
         allow: ['info', 'warn', 'error']
       }
     ],
+    'no-shadow': ['error', { builtinGlobals: true, hoist: 'all' }],
     'padding-line-between-statements': [
       'error',
       { blankLine: 'always', prev: 'export', next: '*' },

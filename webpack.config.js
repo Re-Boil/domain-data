@@ -11,24 +11,16 @@ module.exports = (env, argv = {}) => {
     console.log('\nBuilding for\x1b[34m', mode, '\x1b[0m\n') // eslint-disable-line no-console
   }
 
-  return {
+  const common = {
     mode,
     context: path.resolve(__dirname, 'src'),
     resolve: {
       extensions: ['*', '.js'],
       modules: ['node_modules', path.resolve(__dirname, 'src')],
     },
-    entry: 'index.js',
-    output: {
-      library: '@reboil/domain-data',
-      // libraryTarget: 'commonjs2',
-      libraryTarget: 'system',
-      auxiliaryComment: 'Test Comment',
-      path: path.join(__dirname, 'lib'),
-      filename: 'index.js',
-    },
     externals: /node_modules/,
     devtool: mode === 'development' ? 'cheap-module-source-map' : false,
+    // devtool: '#cheap-module-eval-source-map',
     watch: mode === 'development',
     module: {
       rules: [
@@ -49,7 +41,14 @@ module.exports = (env, argv = {}) => {
         {
           test: /\.js$/,
           exclude: /node_modules/,
-          loader: 'babel-loader',
+          use: [
+            {
+              loader: 'babel-loader',
+              // options: {
+              //   rootMode: 'upward',
+              // },
+            },
+          ],
         },
       ],
     },
@@ -61,15 +60,9 @@ module.exports = (env, argv = {}) => {
       //   // DEFAULT_CONFIG: JSON.stringify(mode === 'development' ? DEFAULT_CONFIG : {}),
       // }),
     ],
-    // stats: {
-    //   colors: true,
-    //   children: false,
-    //   chunks: false,
-    //   chunkModules: false,
-    //   modules: false,
-    // },
     optimization: {
-      minimize: mode === 'production', //false,
+      // minimize: false,
+      minimize: mode === 'production',
     },
     stats: {
       colors: true,
@@ -79,4 +72,43 @@ module.exports = (env, argv = {}) => {
       warnings: true,
     },
   }
+
+  return [
+    {
+      ...common,
+      entry: 'index.js',
+      output: {
+        library: '@reboil/domain-data',
+        libraryTarget: 'commonjs2',
+        // libraryTarget: 'system',
+        auxiliaryComment: 'Test Comment',
+        path: path.join(__dirname, 'lib'),
+        filename: 'index.js',
+      },
+    },
+    {
+      ...common,
+      entry: 'extenders/index.js',
+      output: {
+        library: '@reboil/domain-data/extenders',
+        libraryTarget: 'commonjs2',
+        // libraryTarget: 'system',
+        auxiliaryComment: 'Test Comment',
+        path: path.join(__dirname, 'lib/extenders'),
+        filename: 'index.js',
+      },
+    },
+    {
+      ...common,
+      entry: 'utils/index.js',
+      output: {
+        library: '@reboil/domain-data/utils',
+        libraryTarget: 'commonjs2',
+        // libraryTarget: 'system',
+        auxiliaryComment: 'Test Comment',
+        path: path.join(__dirname, 'lib/utils'),
+        filename: 'index.js',
+      },
+    },
+  ]
 }
