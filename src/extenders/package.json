@@ -1,0 +1,4 @@
+{
+  "name": "@reboil/domain-data/extenders",
+  "main": "../extenders/index.js"
+}
