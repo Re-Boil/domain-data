@@ -3,12 +3,14 @@
 import type { Action } from 'redux'
 import type { Saga } from 'redux-saga'
 import createMetaReducer, { type MetaReducer } from 'utils/create-meta-reducer'
-import { get, reduceWith } from 'utils/common'
+import { get, reduceWith, createAction } from 'utils/common'
 
 export type SagaCreator = any => Saga<*>
 
+type ActionCreator<Actions> = any => Action<$ElementType<Actions, 'type'>>
+
 type ExtenderConfiguration<Actions> = {|
-  actions: any => Action<$ElementType<Actions, 'type'>> | { [string]: (any) => Action<$ElementType<Actions, 'type'>> },
+  actions: string | { [string]: string | ActionCreator<Actions> } | ActionCreator<Actions>,
   initialState: any,
   reducers: { [$ElementType<Actions, 'type'>]: MetaReducer<any, any> },
   middlewares: SagaCreator | Saga<*> | { [string]: SagaCreator | Saga<*> },
@@ -19,17 +21,29 @@ type ExtenderConfiguration<Actions> = {|
 
 export type DomainExtender<Actions> = (domain: string, getState: (any) => any) => ExtenderConfiguration<Actions>
 
+const bindActions = (actions, bindAction, domain) => {
+  if (typeof actions === 'function') {
+    return bindAction(actions)
+  }
+
+  if (typeof actions === 'string') {
+    return bindAction(createAction(`${domain}${actions}`))
+  }
+
+  return reduceWith(actions, action => bindActions(action, bindAction, domain))
+}
+
 const glueExtenders = (
   domain, //: string,
   extenders, // DomainExtenders<DS, A>,
-  getState, // DomainSelector<DS>,
+  domainSelector, // DomainSelector<DS>,
   bindAction,
 ) =>
   Object.keys(extenders).reduce(
     (result, extName) => {
       const extender = extenders[extName]
-      const { reducers = {}, initialState = {}, selectors = {}, actions = {}, middlewares = {} } =
-        typeof extender === 'function' ? extender(domain, getState) : extender
+      const { reducers, initialState, selectors, actions, middlewares } =
+        typeof extender === 'function' ? extender(domain, domainSelector) : extender
 
       return {
         reducers: {
@@ -43,18 +57,15 @@ const glueExtenders = (
         },
         selectors: {
           ...result.selectors,
-          ...reduceWith(selectors, selector => () => selector(getState())),
+          ...reduceWith(selectors || {}, selector => state => selector(domainSelector(state))),
         },
         actions: {
           ...result.actions,
-          // $FlowFixMe
-          ...(typeof actions === 'function'
-            ? { [extName]: bindAction(actions) }
-            : reduceWith(actions, action => bindAction(action))),
+          [extName]: bindActions(actions || {}, bindAction, domain),
         },
         middlewares: {
           ...result.middlewares,
-          [extName]: middlewares,
+          [extName]: middlewares || {},
         },
       }
     },
@@ -69,16 +80,16 @@ const glueExtenders = (
 
 const defaultReducer = state => state
 
-const reducersWrapper = (reducers, initialState) => (state, action) => {
-  const reducer = reducers[action.type] || defaultReducer
+const reducersWrapper = (reducers, initialState) => (state, action: Action<any>) => {
+  const reducer: MetaReducer<any, any> = reducers[action.type] || defaultReducer
 
   return reducer(state || initialState, action)
 }
 
-function DomainFactory(extenders: { [string]: DomainExtender<any> } = {}, state: {} = {}) {
+function DomainFactory(extenders: { [string]: DomainExtender<any> } = {}, domainState: {} = {}) {
   const createDomain = (domain: string, getState: () => any, bindAction: any => any) => {
     const domainSelector = get(domain)
-    const selector = () => domainSelector(getState())
+    const selector = (state: {}) => domainSelector(state || getState())
 
     const { reducers, initialState, selectors, actions, middlewares } = glueExtenders(
       domain,
@@ -87,7 +98,7 @@ function DomainFactory(extenders: { [string]: DomainExtender<any> } = {}, state:
       bindAction,
     )
 
-    const wrappedReducer = reducersWrapper(reducers, { ...initialState, ...state })
+    const wrappedReducer = reducersWrapper(reducers, { ...initialState, ...domainState })
 
     const reducer = createMetaReducer<any, any>(wrappedReducer, domain)
 

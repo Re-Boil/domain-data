@@ -13,11 +13,10 @@ export const get = (path: string) => {
 
   return keys.length === 1
     ? (obj: NestedObject) => obj[path]
-    : (obj: NestedObject) => keys.reduce((result, key) => (result && result[key] ? result[key] : undefined), obj)
+    : (obj: NestedObject) => keys.reduce((result, key) => result?.[key], obj)
 }
 
-// eslint-disable-next-line no-unused-vars
-export const woTransform = <T>(data: T, ...rest: any[]): T => data
+export const woTransform = <T>(data: T): T => data
 
 export const JoinPaths = (...args: string[]) => args.filter(arg => Boolean(arg)).join('.')
 

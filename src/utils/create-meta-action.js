@@ -8,7 +8,6 @@ export type MetaAction<Type, Payload, Additional> = {
   ...Additional,
   type: Type,
   payload: Payload,
-  error?: boolean,
   meta: MetaInfo,
 }
 
@@ -20,7 +19,7 @@ const createMetaAction = <Type, Payload>(
   +toString: () => Type,
 }) => {
   const action = (payload, additionals?: { [string]: any }) => ({
-    ...(additionals ? additionals : {}),
+    ...additionals,
     type,
     payload,
     meta: {
