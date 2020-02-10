@@ -43,19 +43,23 @@ const ConfigureDomains = (configuration, { getState, bindAction }, prefix) =>
     },
   )
 
-export const CreateStore = (configuration, initialState, enhancers) => {
+export const CreateStore = (initialConfiguration, initialState, enhancers) => {
   const store = createStore(combineReducers({}), initialState, enhancers)
   const { getState } = store
   const bindAction = bindActionCreator(store)
 
-  const { reducer, domains } = ConfigureDomains(configuration, {
-    getState,
-    bindAction,
-  })
+  const reconfigureStore = configuration => {
+    const { reducer, domains } = ConfigureDomains(configuration, {
+      getState,
+      bindAction,
+    })
 
-  store.replaceReducer(combineReducers(reducer))
+    store.replaceReducer(combineReducers(reducer))
 
-  return { store, bindAction, domains }
+    return { store, domains, bindAction, reconfigureStore }
+  }
+
+  return reconfigureStore(initialConfiguration)
 }
 
 export default CreateStore

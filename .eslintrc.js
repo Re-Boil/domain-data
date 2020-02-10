@@ -42,6 +42,7 @@ module.exports = {
   'rules': {
     'prettier/prettier': 'error',
     // 'flowtype-errors/show-errors': 'error'
+    'import/no-duplicates': 'error',
     'no-plusplus': 'off',
     'no-unused-vars': ['error', { 'ignoreRestSiblings': true }],
     'arrow-parens': ['error', 'as-needed'],
