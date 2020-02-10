@@ -1,4 +1,5 @@
 // @flow
+
 import type { Saga } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
@@ -6,11 +7,13 @@ import produce from 'immer'
 
 import type { DomainExtender, SagaCreator } from 'core/domain-factory'
 import createMetaAction from 'utils/create-meta-action'
-import { createAction, woTransform } from 'utils/common'
+import { woTransform } from 'utils/common'
 
 export const FETCH_STARTED: '@fetch/STARTED' = '@fetch/STARTED'
 export const FETCH_SUCCESS: '@fetch/SUCCESS' = '@fetch/SUCCESS'
 export const FETCH_FAILURE: '@fetch/FAILURE' = '@fetch/FAILURE'
+
+const FETCH_ACTION: '@fetch' = '@fetch'
 
 export type FetchState<T> = {|
   isFetching: boolean,
@@ -42,9 +45,8 @@ const createMetaActions = <T>(domain: string) => ({
   failure: createMetaAction<typeof FETCH_FAILURE, string>(domain, FETCH_FAILURE),
 })
 
-type TFetchAction<T> = {
+type TFetchAction = {
   type: string,
-  payload: T,
   [string]: any,
 }
 
@@ -56,13 +58,14 @@ type FetchSagaOptions<T> = {|
   handleError?: HandlerFunction<T>,
 |}
 
-type Interceptor<T> = (data: T, state?: any, ...rest: any[]) => T | Generator<void, T, empty>
-type Transformer<FromT, ToT> = (data: FromT, state?: any, ...rest: any[]) => ToT
+type Interceptor<T> = (data: T, payload?: { [string]: any }, state?: any) => T | Generator<void, T, empty>
+type PreTransformer = (payload: { [string]: any }, state?: any) => { [string]: any }
+type PostTransformer<T> = (data: any, payload?: { [string]: any }, state?: any) => T
 
 type FetchFactoryOptions<T> = {
   trasnformers?: {
-    pre?: Transformer<any, any>,
-    post?: Transformer<any, T>,
+    pre?: PreTransformer,
+    post?: PostTransformer<T>,
   },
   interceptors?: {
     success?: Interceptor<T>,
@@ -72,33 +75,32 @@ type FetchFactoryOptions<T> = {
 
 const createFetchSaga = <T>(domain: string, getState: any => any, options?: FetchFactoryOptions<T>): SagaCreator => {
   const { started, success, failure } = createMetaActions<T>(domain)
-  const preTransform: Transformer<any, T> = options?.trasnformers?.pre ?? woTransform
-  const postTransform: Transformer<any, T> = options?.trasnformers?.post ?? woTransform
+  const preTransform: PreTransformer = options?.trasnformers?.pre ?? woTransform
+  const postTransform: PostTransformer<T> = options?.trasnformers?.post ?? woTransform
   const successInterceptor: Interceptor<T> = options?.interceptors?.success ?? woTransform
   const errorInterceptor: Interceptor<T | void> = options?.interceptors?.error ?? woTransform
 
   return ({ api, handleSuccess = woTransform, handleError = woTransform }: FetchSagaOptions<T>) => {
     // $FlowFixMe Saga<void>
-    function* FetchSaga(action: TFetchAction<any>): Saga<void> {
-      const { type, payload, ...rest } = action
+    function* FetchSaga(action: TFetchAction): Saga<void> {
+      const { type, ...payload } = action
 
       yield put(started())
       const state = yield getState()
 
       try {
-        const response = yield call(api, preTransform(payload, state, rest), rest, state)
+        const response = yield call(api, preTransform(payload, state), state)
 
-        let data = postTransform(response, state, rest)
+        let data: T = postTransform(response, payload, state)
 
-        // $FlowFixMe Saga<void>
-        data = yield successInterceptor(data, state, rest)
-        data = yield handleSuccess(data, state, rest)
+        data = yield successInterceptor(data, payload, state)
+        data = yield handleSuccess(data, payload, state)
 
         yield put(success(data))
       } catch (error) {
-        let errorData = yield errorInterceptor(error, state, action)
+        let errorData = yield errorInterceptor(error, payload, state)
 
-        errorData = yield handleError(errorData, rest, action)
+        errorData = yield handleError(errorData, payload, state)
 
         yield put(failure(errorData))
       }
@@ -108,7 +110,10 @@ const createFetchSaga = <T>(domain: string, getState: any => any, options?: Fetc
   }
 }
 
-const FetchFactory = <T>(options?: FetchFactoryOptions<T>): DomainExtender<FetchActions<T>> => {
+const FetchFactory = <T>(
+  options?: FetchFactoryOptions<T>,
+  actions?: { [string]: string },
+): DomainExtender<FetchActions<T>> => {
   // $FlowFixMe
   return (domain: string, getState: any => any) => {
     const reducers = {
@@ -153,7 +158,7 @@ const FetchFactory = <T>(options?: FetchFactoryOptions<T>): DomainExtender<Fetch
       reducers,
       initialState,
       selectors,
-      actions: createAction(`${domain}@FETCH`),
+      actions: actions ? { ...actions, fetch: FETCH_ACTION } : FETCH_ACTION,
       middlewares: createFetchSaga<T>(domain, getState, options),
     }
   }
